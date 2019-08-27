@@ -2,6 +2,7 @@
 
 /* REFERENCJE */
 var newGameButton = document.getElementById('new-game-button');
+var choiceButtons = document.getElementById('choice-buttons');
 
 var buttonRock = document.getElementById('rock-button');
 var buttonScissors = document.getElementById('scissors-button');
@@ -10,37 +11,48 @@ var buttonPaper = document.getElementById('paper-button');
 var output = document.getElementById('output');
 var choiceButtons = document.getElementById('choice-buttons');
 
+var modal = document.querySelector('.modal');
+
 /* NASŁUCHIWACZE */
-buttonRock.addEventListener('click', function() {
-  playerMove('ROCK');
+
+choiceButtons.addEventListener('click', function(event) {
+
+   if(event.target.tagName === 'BUTTON') {
+     var choice = event.target.dataset.move;
+     console.log(choice);
+     playerMove(choice);
+   }
+  
 });
-buttonScissors.addEventListener('click', function() {
-  playerMove('SCISSORS');
-});
-buttonPaper.addEventListener('click', function() {
-  playerMove('PAPER')
-});
+
 newGameButton.addEventListener('click', function(){
   newGame()
 });
 
 /* ZMIENNE GLOBALNE */
 
-var playerChoice; 
-var computerChoice;
-var dispResult;
+var params = {
+  player: {
+    choice: '',
+    result: 0
+  },
+  computer: {
+    choice: '',
+    result: 0
+  },
+  wonRounds: 0,
+  dispResult: ''
+}
 
-var wonRounds;
-var playerResult = 0;
-var computerResult = 0;
+var roundResults = [];
 
 /* FUNKCJE */
 
 function newGame() {
-    wonRounds = prompt('Enter the number of rounds');
-    wonRounds = parseInt(wonRounds); 
+    params.wonRounds = prompt('Enter the number of rounds');
+    params.wonRounds = parseInt(params.wonRounds); 
   
-    if(!isNaN(wonRounds)) {
+    if(!isNaN(params.wonRounds)) {
       choiceButtons.classList.remove('hide');
       newGameButton.classList.add('hide');
     }
@@ -57,59 +69,85 @@ function randMove() {
   if(x===3) return 'PAPER'; 
 }
 
+function addRoundResult() {
+  roundResults.push({ playerChoice: params.player.choice, computerChoice: params.computer.choice, score: params.player.result + ':' + params.computer.result }); 
+  console.log(roundResults);
+}
+
 function playerMove(choice) {
   
-  playerChoice = choice;
-  computerChoice = randMove();
+  params.player.choice = choice;
+  params.computer.choice = randMove();
   
   checkRoundWinner();
-  addText('You  ' + dispResult + ': ' + 'You played  ' + playerChoice + ', computer played  ' + computerChoice);
+  addText('You  ' + params.dispResult + ': ' + 'You played  ' + params.player.choice + ', computer played  ' + params.computer.choice);
   
+  addRoundResult();
   checkEndGame();
   
 };
 
 function refreshScore() {
-  document.getElementById('playerResult').innerHTML = playerResult;
-  document.getElementById('computerResult').innerHTML = computerResult;
+  document.getElementById('playerResult').innerHTML = params.player.result;
+  document.getElementById('computerResult').innerHTML = params.computer.result;
 }
 
 function resetGame() {
-  wonRounds = 0;
-  playerResult = 0;
-  computerResult = 0;
+  params.wonRounds = 0;
+  params.player.result = 0;
+  params.computer.result = 0;
   choiceButtons.classList.add('hide');
   newGameButton.classList.remove('hide');
   addText('');
   refreshScore();
 }
 
+function showFinalModal(winner) {
+  modal.querySelector('.modal__result').innerText = winner;
+  
+  var tbody = '<tbody>';
+  
+  roundResults.forEach(function(round) {
+    tbody += `
+       <tr>
+         <td>${round.playerChoice}</td>
+         <td>${round.computerChoice}</td>
+         <td>${round.score}</td>
+       </tr>`;
+  });
+  
+  tbody += '</tbody>';
+  modal.querySelector('.modal__table').innerHTML = tbody;
+  
+  modal.classList.remove('hide');
+}
+
 function checkEndGame() {
   
-  if(playerResult === wonRounds) {
-    alert('Wygrałeś!');
+  if(params.player.result === params.wonRounds) {
+    showFinalModal('You win!');
     resetGame();
   }
-  else if(computerResult === wonRounds) {
-    alert('Przegrales...');
+  else if(params.computer.result === params.wonRounds) {
+    showFinalModal('You lose...');
     resetGame();
   }
 }
 
 function checkRoundWinner() {
   
-  if((playerChoice === 'PAPER' && computerChoice === 'ROCK') 
-     || (playerChoice === 'SCISSORS' && computerChoice === 'PAPER') 
-     || (playerChoice === 'ROCK' && computerChoice === 'SCISSORS')) {   
-    dispResult = 'WIN';
-    playerResult++;
+  if((params.player.choice === 'PAPER' && params.computer.choice === 'ROCK') 
+     || (params.player.choice === 'SCISSORS' && params.computer.choice === 'PAPER') 
+     || (params.player.choice === 'ROCK' && params.computer.choice === 'SCISSORS')) {   
+    params.dispResult = 'WIN';
+    params.player.result++;
   }
-  else if(playerChoice === computerChoice) {
-    dispResult = 'TIED';
+  else if(params.player.choice === params.computer.choice) {
+    params.dispResult = 'TIED';
   } 
   else {
-    dispResult = 'LOSE';
-    computerResult++;
+    params.dispResult = 'LOSE';
+    params.computer.result++;
   }
   refreshScore();
 }
